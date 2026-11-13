@@ -1,0 +1,34 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signed() { return request.auth != null; }
+  // Substitua os valores abaixo pelos UIDs reais do Firebase Authentication.
+  function admin() { return signed() && request.auth.uid == 'SUBSTITUA_UID_ADMIN'; }
+  function staff() { return signed() && (admin() || request.auth.uid == 'SUBSTITUA_UID_FUNCIONARIO'); }
+  match /mesas/{mesaId} {
+   allow get: if signed();
+   allow list: if staff();
+   allow create, update, delete: if admin();
+  }
+  match /chamados/{chamadoId} {
+   allow get, list: if staff() || (signed() && resource.data.solicitante == request.auth.uid);
+   allow create: if signed()
+    && request.resource.data.keys().hasOnly(['mesaId','numero','salao','tipo','status','criadoEm','solicitante'])
+    && request.resource.data.keys().hasAll(['mesaId','numero','salao','tipo','status','criadoEm','solicitante'])
+    && request.resource.data.mesaId is string
+    && exists(/databases/$(database)/documents/mesas/$(request.resource.data.mesaId))
+    && get(/databases/$(database)/documents/mesas/$(request.resource.data.mesaId)).data.ativa == true
+    && request.resource.data.numero == get(/databases/$(database)/documents/mesas/$(request.resource.data.mesaId)).data.numero
+    && request.resource.data.salao == get(/databases/$(database)/documents/mesas/$(request.resource.data.mesaId)).data.salao
+    && request.resource.data.solicitante == request.auth.uid
+    && request.resource.data.tipo in ['garcom','conta']
+    && request.resource.data.status == 'pendente'
+    && request.resource.data.criadoEm == request.time;
+   allow update: if staff()
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+    && resource.data.status == 'pendente'
+    && request.resource.data.status == 'atendido';
+   allow delete: if admin();
+  }
+ }
+}
