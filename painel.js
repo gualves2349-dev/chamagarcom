@@ -6,6 +6,21 @@ $('navHome').onclick=()=>switchPage('home');$('navCadastro').onclick=()=>switchP
 for(const b of document.querySelectorAll('#filtros button'))b.onclick=()=>{filter=b.dataset.salao;document.querySelectorAll('#filtros button').forEach(x=>x.classList.toggle('active',x===b));renderCalls()};
 // O navegador pode bloquear áudio até uma interação explícita do usuário.
 let soundEnabled=false;
+let soundRequested=true;
+const cashAudio = new Audio('./som-solicitar-conta.mp3');
+cashAudio.preload='auto';
+cashAudio.volume=1;
+cashAudio.load();
+function playCashSound(){
+  if(!soundEnabled)return;
+  try{
+    cashAudio.pause();
+    cashAudio.currentTime=0;
+    const result=cashAudio.play();
+    if(result?.catch)result.catch(e=>console.warn('O navegador bloqueou o áudio da conta:',e));
+  }catch(e){console.warn('Falha no áudio da conta:',e)}
+}
+
 const soundButton=$('som');
 function showSoundState(){soundButton.textContent=soundEnabled?'● Som ativo':'● Som desativado';soundButton.className=soundEnabled?'sound-on':'sound-off';soundButton.setAttribute('aria-pressed',String(soundEnabled));soundButton.title=soundEnabled?'Clique para silenciar os avisos':'Clique para ativar os avisos';}
 async function enableSound(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Áudio não disponível');audioCtx ||=new C();await audioCtx.resume();soundEnabled=audioCtx.state==='running';showSoundState();return soundEnabled}catch(e){soundEnabled=false;showSoundState();return false}}
@@ -23,13 +38,8 @@ function beep(tipo='garcom') {
  if(!soundEnabled||!audioCtx||audioCtx.state!=='running')return;
  try {
   const t=audioCtx.currentTime+.025;
-  if(tipo==='conta') {
-   // Caixa registradora: clique de abertura e três notas metálicas ascendentes.
-   playTone(240,t,.065,'square',.055);
-   playTone(880,t+.095,.19,'sine',.14);
-   playTone(1174.66,t+.205,.24,'sine',.15);
-   playTone(1567.98,t+.325,.42,'sine',.13);
-   playTone(3135.96,t+.33,.25,'sine',.035);
+  if(String(tipo).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes('conta')) {
+   playCashSound();
   } else {
    // Duas notas de chamada, com timbre de metais.
    for(const [offset,freq] of [[0,392],[.32,523.25]]) {
@@ -39,7 +49,15 @@ function beep(tipo='garcom') {
   }
  }catch(e){console.warn('Falha no áudio',e)}
 }
-soundButton.onclick=async()=>{if(soundEnabled){soundEnabled=false;showSoundState();}else{const ok=await enableSound();if(ok)beep();else err.textContent='O navegador bloqueou o áudio. Clique novamente para ativar.'}};
+soundButton.onclick=async()=>{
+  if(soundEnabled){soundRequested=false;soundEnabled=false;showSoundState();}
+  else{
+    soundRequested=true;
+    const ok=await enableSound();
+    if(ok)beep();
+    else err.textContent='O navegador bloqueou o áudio. Toque novamente em Som desativado para ativar.';
+  }
+};
 // Alternância de tema, com preferência salva apenas neste navegador.
 const applyTheme=theme=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem('chamagarcom-theme',theme)}catch{};for(const id of ['tema','temaLogin']){const b=$(id);if(b)b.textContent=theme==='dark'?'☀ Modo claro':'☾ Modo escuro'}};
 applyTheme((()=>{try{return localStorage.getItem('chamagarcom-theme')==='dark'?'dark':'light'}catch{return 'light'}})());
@@ -51,15 +69,26 @@ try{
  ({db,auth}=await import('./firebase.js'));
  ({doc,updateDoc,collection,query,where,onSnapshot,setDoc,getDoc,serverTimestamp,deleteDoc}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js'));
  const {signInWithEmailAndPassword,onAuthStateChanged,signOut}=await import('https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js');
- $('loginForm').onsubmit=async e=>{e.preventDefault();await enableSound();$('loginErro').textContent='';try{await signInWithEmailAndPassword(auth,$('email').value,$('senha').value)}catch(e){$('loginErro').textContent='Não foi possível entrar. Confira e-mail e senha.'}};
+ $('loginForm').onsubmit=async e=>{e.preventDefault();soundRequested=true;
+  // Executa o desbloqueio no próprio gesto de enviar o login.
+  const unlock=enableSound();
+  // Um play iniciado pelo gesto pode liberar o áudio HTML no iOS.
+  try{
+    cashAudio.muted=true;
+    const p=cashAudio.play();
+    if(p?.then)p.then(()=>{cashAudio.pause();cashAudio.currentTime=0;cashAudio.muted=false}).catch(()=>{cashAudio.muted=false});
+    else cashAudio.muted=false;
+  }catch{cashAudio.muted=false}
+  await unlock;
+  $('loginErro').textContent='';try{await signInWithEmailAndPassword(auth,$('email').value,$('senha').value)}catch(e){$('loginErro').textContent='Não foi possível entrar. Confira e-mail e senha.'}};
  $('sair').onclick=()=>signOut(auth);
  $('mesaForm').onsubmit=async e=>{e.preventDefault();const numero=$('numero').value.trim(),salao=Number($('salao').value),msg=$('mesaMsg');if(!/^\d{1,4}$/.test(numero)||!Number.isInteger(salao)||salao<1||salao>99){msg.textContent='Informe número e salão válidos.';return;}const bytes=new Uint8Array(18);crypto.getRandomValues(bytes);const token=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');try{await setDoc(doc(db,'mesas',token),{numero,salao,ativa:true,criadaEm:serverTimestamp()});const url=new URL('./index.html',location.href);url.searchParams.set('mesa',token);const result=$('resultado');result.replaceChildren();const p=document.createElement('p');p.textContent='Link exclusivo da mesa:';const a=document.createElement('a');a.href=url.href;a.textContent=url.href;a.target='_blank';a.rel='noopener';const box=document.createElement('div');box.className='linkbox';box.append(a);const copy=document.createElement('button');copy.className='secondary';copy.style.marginTop='10px';copy.textContent='Copiar link';copy.onclick=async()=>{await navigator.clipboard.writeText(url.href);copy.textContent='Copiado!'};result.append(p,box,copy);msg.className='notice ok';msg.textContent='Mesa cadastrada com sucesso.';$('mesaForm').reset()}catch(e){msg.className='notice';msg.textContent='Falha ao cadastrar: '+e.code;console.error(e)}};
  $('funcForm').onsubmit=async e=>{e.preventDefault();const nome=$('funcNome').value.trim(),uid=$('funcUid').value.trim(),msg=$('funcMsg');if(!nome||!/^[A-Za-z0-9_-]{15,128}$/.test(uid)){msg.textContent='Informe nome e UID válido.';return;}try{await setDoc(doc(db,'funcionarios',uid),{nome,papel:'garcom',ativo:true,criadoEm:serverTimestamp()});msg.className='notice ok';msg.textContent='Funcionário autorizado. Ele já pode entrar com seu e-mail e senha do Firebase.';$('funcForm').reset()}catch(e){msg.className='notice';msg.textContent='Falha ao autorizar: '+e.code;console.error(e)}};
- onAuthStateChanged(auth,async user=>{unsubscribe();unsubscribeMesas();unsubscribeFuncs();seen=null;allCalls=[];err.textContent='';$('login').classList.toggle('hidden',!!user);$('workspace').classList.toggle('hidden',!user);if(!user){soundEnabled=false;showSoundState();return;}switchPage('home');if(!soundEnabled)enableSound();
+ onAuthStateChanged(auth,async user=>{unsubscribe();unsubscribeMesas();unsubscribeFuncs();seen=null;allCalls=[];err.textContent='';$('login').classList.toggle('hidden',!!user);$('workspace').classList.toggle('hidden',!user);if(!user){soundEnabled=false;showSoundState();return;}switchPage('home');if(soundRequested&&!soundEnabled)enableSound();
   const adminRef=doc(db,'funcionarios',user.uid);try{const s=await getDoc(adminRef);isAdmin=s.exists()&&s.data().papel==='admin'&&s.data().ativo===true}catch(e){isAdmin=false}
   $('adminOnly').classList.toggle('hidden',!isAdmin);$('notAdmin').classList.toggle('hidden',isAdmin);
   const q=query(collection(db,'chamados'),where('status','==','pendente'));
-  unsubscribe=onSnapshot(q,s=>{const ids=new Set(s.docs.map(d=>d.id));if(seen){const novos=s.docs.filter(d=>!seen.has(d.id));for(const d of novos)beep(d.data().tipo==='conta'?'conta':'garcom');}seen=ids;allCalls=s.docs.map(d=>({id:d.id,data:d.data()})).sort((a,b)=>(a.data.criadoEm?.seconds||0)-(b.data.criadoEm?.seconds||0));$('conexao').textContent='● Atualizado em tempo real';renderCalls()},e=>{err.textContent='Sem permissão para visualizar chamados: '+e.code;$('conexao').textContent='Sem conexão com os chamados'});
+  unsubscribe=onSnapshot(q,s=>{const ids=new Set(s.docs.map(d=>d.id));if(seen){const novos=s.docs.filter(d=>!seen.has(d.id));for(const d of novos)beep(d.data().tipo);}seen=ids;allCalls=s.docs.map(d=>({id:d.id,data:d.data()})).sort((a,b)=>(a.data.criadoEm?.seconds||0)-(b.data.criadoEm?.seconds||0));$('conexao').textContent='● Atualizado em tempo real';renderCalls()},e=>{err.textContent='Sem permissão para visualizar chamados: '+e.code;$('conexao').textContent='Sem conexão com os chamados'});
   if(isAdmin){
    unsubscribeMesas=onSnapshot(collection(db,'mesas'),s=>{
     const box=$('mesasLista');box.replaceChildren();
