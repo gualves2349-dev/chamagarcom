@@ -1,18 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
  match /databases/{database}/documents {
-  function signed() { return request.auth != null; }
-  // Substitua os valores abaixo pelos UIDs reais do Firebase Authentication.
-  function admin() { return signed() && request.auth.uid == 'SUBSTITUA_UID_ADMIN'; }
-  function staff() { return signed() && (admin() || request.auth.uid == 'SUBSTITUA_UID_FUNCIONARIO'); }
+  // Substitua pelo UID do administrador do Firebase Authentication.
+  function admin() { return request.auth != null && request.auth.uid == 'SUBSTITUA_UID_ADMIN'; }
+  function staff() { return admin() || (request.auth != null && exists(/databases/$(database)/documents/funcionarios/$(request.auth.uid)) && get(/databases/$(database)/documents/funcionarios/$(request.auth.uid)).data.ativo == true); }
+  match /funcionarios/{uid} {
+   allow get: if admin() || (request.auth != null && request.auth.uid == uid);
+   allow list, create, update, delete: if admin();
+  }
   match /mesas/{mesaId} {
-   allow get: if signed();
+   allow get: if request.auth != null;
    allow list: if staff();
    allow create, update, delete: if admin();
   }
   match /chamados/{chamadoId} {
-   allow get, list: if staff() || (signed() && resource.data.solicitante == request.auth.uid);
-   allow create: if signed()
+   allow get, list: if staff() || (request.auth != null && resource.data.solicitante == request.auth.uid);
+   allow create: if request.auth != null
     && request.resource.data.keys().hasOnly(['mesaId','numero','salao','tipo','status','criadoEm','solicitante'])
     && request.resource.data.keys().hasAll(['mesaId','numero','salao','tipo','status','criadoEm','solicitante'])
     && request.resource.data.mesaId is string
@@ -24,10 +27,7 @@ service cloud.firestore {
     && request.resource.data.tipo in ['garcom','conta']
     && request.resource.data.status == 'pendente'
     && request.resource.data.criadoEm == request.time;
-   allow update: if staff()
-    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
-    && resource.data.status == 'pendente'
-    && request.resource.data.status == 'atendido';
+   allow update: if staff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && resource.data.status == 'pendente' && request.resource.data.status == 'atendido';
    allow delete: if admin();
   }
  }

@@ -1,33 +1,19 @@
-# Chama Garçom — protótipo inicial
+# Chama Garçom — interface atualizada
 
-## 1. Criar o projeto
-Crie projeto Firebase e aplicativo Web em Configurações do projeto > Seus apps. Copie as propriedades `apiKey`, `authDomain`, `projectId`, `appId` para `firebase-config.js`.
+## Publicação
+Envie todos os arquivos desta pasta para a **raiz** da branch `main` do GitHub Pages, substituindo os anteriores. `painel.html` é a central com login, Início e Cadastrar. `index.html?mesa=TOKEN` é a página da mesa.
 
-## 2. Autenticação
-Em Authentication > Sign-in method habilite **Anônimo** (para clientes) e **E-mail/senha** (para funcionários). Em Authentication > Users crie os usuários de administrador e funcionário. Copie seus UIDs.
+## Firebase
+O `firebase-config.js` já contém a configuração pública fornecida para o projeto `chamagarcom-fe1b1`.
 
-## 3. Firestore
-Crie Firestore Database (modo produção). Na aba Regras, cole `firestore.rules` e substitua `SUBSTITUA_UID_ADMIN` e `SUBSTITUA_UID_FUNCIONARIO` pelos UIDs de usuários autorizados. Publique as regras. Não deixe as regras de teste abertas.
+1. Em Firebase Authentication habilite **E-mail/senha** e **Anônimo**.
+2. Em Authentication → Usuários crie o login do administrador.
+3. Em Firestore → Regras copie o conteúdo de `firestore.rules`, substitua `SUBSTITUA_UID_ADMIN` pelo UID real e publique.
+4. Em Firestore → Dados crie a coleção `funcionarios` com documento ID igual ao UID do administrador e campos `nome` (string), `papel` (string, valor `admin`) e `ativo` (boolean, `true`).
+5. Entre em `painel.html`. Na aba Cadastrar crie mesas e copie os links exclusivos para NFC e QR Code.
+6. Para funcionários: crie as contas manualmente em Authentication → Usuários, copie o UID e use o formulário de funcionários na aba Cadastrar. O cadastro autoriza o acesso, mas **não cria o e-mail/senha automaticamente**.
 
-## 4. GitHub Pages
-Crie repositório público `chama-garcom`. Envie TODOS os arquivos desta pasta na raiz. Vá a Settings > Pages > Deploy from a branch > main > /(root) > Save. Se a branch não aparecer, primeiro faça o commit dos arquivos e atualize a página. Aguarde a URL de publicação.
+## Atenção
+As regras permitem chamados de usuários anônimos autenticados e não implementam limites robustos de frequência nem prevenção de spam. **Use apenas em piloto supervisionado**. Antes de produção, implemente validação/rate limit no backend, proteção contra duplicatas e monitoramento de consumo do Firebase. As regras não são proteção contra abuso de chamadas anônimas.
 
-## 5. Teste
-Abra `admin.html`, faça login como administrador, cadastre a mesa e copie o link exclusivo. Abra o link em um navegador anônimo ou outro aparelho. Em `painel.html`, faça login como funcionário, clique Ativar som e faça o chamado no aparelho do cliente.
-
-## Avisos importantes
-- Protótipo, não indicado para uso comercial sem reforço de segurança, testes de carga e prevenção de abuso.
-- O Firebase Anonymous Auth cria uma identidade temporária por navegador. O sistema NÃO impede que alguém com o link público envie chamadas repetidas usando identidades diferentes; o limite de frequência precisa de validação no servidor para produção.
-- O cliente consulta somente os próprios chamados (mesma identidade anônima). Funcionários autorizados consultam todos.
-- A autenticação de funcionário depende das regras de segurança com UIDs corretos.
-- A consulta de chamados pendentes pode solicitar a criação de um índice composto no Firestore; siga o link apresentado no console se ocorrer esse erro.
-- O áudio só funciona depois da interação do funcionário com o botão Ativar som e enquanto a página estiver aberta e permitida pelo navegador.
-- Para isolamento de múltiplos restaurantes, evoluir para projeto multiestabelecimento com regras específicas.
-- A configuração Web do Firebase não é senha secreta, mas jamais coloque senhas privadas ou credenciais administrativas no repositório.
-
-
-## Correção GitHub Pages
-O arquivo firebase-config.js exporta firebaseConfig e firebaseReady; firebase.js importa o SDK diretamente da CDN do Google. Não substitua firebase-config.js pelo exemplo do console Firebase com import de firebase/app.
-
-## Segurança antes de uso real
-As regras firestore.rules fornecidas são um protótipo. Elas não implementam limite de frequência robusto por mesa, e permitem a usuários autenticados consultar IDs conhecidos de mesas. Não implante em operação comercial sem proteção contra abuso no servidor. Configure UIDs autorizados em firestore.rules e publique no console Firestore > Regras.
+O painel precisa permanecer aberto e com áudio ativado para alertas sonoros. Em celulares, o navegador pode restringir áudio em segundo plano.
