@@ -1,0 +1,8 @@
+ATUALIZACAO PONTUAL - EXCLUIR MESA
+
+Substitua somente painel.js e style.css no GitHub Pages.
+Acesse painel.html > Cadastrar > Mesas cadastradas > Excluir mesa.
+Exige conta de administrador e regras do Firestore permitindo delete em mesas.
+Nenhuma Cloud Function ou plano Blaze e necessario.
+A exclusao invalida o link NFC/QR daquela mesa e nao apaga historico de chamados.
+O bloqueio de chamados pendentes e feito na interface, nao e uma garantia contra operacoes simultaneas; para uso em producao recomenda-se validacao transacional no backend.

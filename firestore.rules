@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
  match /databases/{database}/documents {
   // Substitua pelo UID do administrador do Firebase Authentication.
-  function admin() { return request.auth != null && request.auth.uid == 'wYEaBi9yYVXiJPqtpHuuTBpnBFi1'; }
+  function admin() { return request.auth != null && request.auth.uid == 'SUBSTITUA_UID_ADMIN'; }
   function staff() { return admin() || (request.auth != null && exists(/databases/$(database)/documents/funcionarios/$(request.auth.uid)) && get(/databases/$(database)/documents/funcionarios/$(request.auth.uid)).data.ativo == true); }
   match /funcionarios/{uid} {
    allow get: if admin() || (request.auth != null && request.auth.uid == uid);

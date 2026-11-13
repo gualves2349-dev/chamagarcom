@@ -1,0 +1,8 @@
+CHAMA GARÇOM — atualização responsiva
+
+1. Envie TODOS os arquivos desta pasta para a raiz do repositório GitHub Pages, substituindo os existentes.
+2. Faça commit e aguarde a publicação.
+3. Abra painel.html e teste em celular.
+4. Em Cadastrar, use ↕ para arrastar blocos em computador; no celular use ↑ e ↓. A ordem é salva apenas neste navegador.
+5. O som toca quando um novo chamado chega, se o navegador permitir áudio. Em iOS pode ser necessário tocar em Som para liberar o áudio. O volume final depende do dispositivo.
+6. Esta versão não altera regras do Firestore nem integra criação de contas no Firebase Authentication.

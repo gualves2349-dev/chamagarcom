@@ -9,7 +9,22 @@ let soundEnabled=false;
 const soundButton=$('som');
 function showSoundState(){soundButton.textContent=soundEnabled?'● Som ativo':'● Som desativado';soundButton.className=soundEnabled?'sound-on':'sound-off';soundButton.setAttribute('aria-pressed',String(soundEnabled));soundButton.title=soundEnabled?'Clique para silenciar os avisos':'Clique para ativar os avisos';}
 async function enableSound(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Áudio não disponível');audioCtx ||=new C();await audioCtx.resume();soundEnabled=audioCtx.state==='running';showSoundState();return soundEnabled}catch(e){soundEnabled=false;showSoundState();return false}}
-const beep=()=>{if(!soundEnabled||!audioCtx||audioCtx.state!=='running')return;try{const now=audioCtx.currentTime;for(const [offset,freq] of [[0,659.25],[.15,783.99]]){const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.setValueAtTime(freq,now+offset);g.gain.setValueAtTime(.0001,now+offset);g.gain.exponentialRampToValueAtTime(.065,now+offset+.025);g.gain.exponentialRampToValueAtTime(.0001,now+offset+.25);o.connect(g);g.connect(audioCtx.destination);o.start(now+offset);o.stop(now+offset+.27)}}catch(e){console.warn(e)}};
+// Aviso de duas notas com timbre de metais sintetizado e volume moderadamente alto.
+const beep=()=>{
+ if(!soundEnabled||!audioCtx||audioCtx.state!=='running')return;
+ try{
+  const now=audioCtx.currentTime;
+  const compressor=audioCtx.createDynamicsCompressor();compressor.threshold.value=-18;compressor.ratio.value=3;compressor.connect(audioCtx.destination);
+  for(const [offset,freq] of [[0,392],[.32,523.25]]){
+   const t=now+offset,env=audioCtx.createGain(),filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=1700;
+   env.gain.setValueAtTime(.0001,t);env.gain.linearRampToValueAtTime(.17,t+.065);env.gain.setValueAtTime(.15,t+.19);env.gain.exponentialRampToValueAtTime(.0001,t+.37);
+   filter.connect(env);env.connect(compressor);
+   for(const [harmonic,level] of [[1,.7],[2,.22],[3,.1],[4,.05]]){
+    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sawtooth';osc.frequency.setValueAtTime(freq*harmonic*.995,t);osc.frequency.linearRampToValueAtTime(freq*harmonic,t+.045);gain.gain.value=level*.45;osc.connect(gain);gain.connect(filter);osc.start(t);osc.stop(t+.39);
+   }
+  }
+ }catch(e){console.warn('Não foi possível tocar o aviso',e)}
+};
 soundButton.onclick=async()=>{if(soundEnabled){soundEnabled=false;showSoundState();}else{const ok=await enableSound();if(ok)beep();else err.textContent='O navegador bloqueou o áudio. Clique novamente para ativar.'}};
 // Alternância de tema, com preferência salva apenas neste navegador.
 const applyTheme=theme=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem('chamagarcom-theme',theme)}catch{};for(const id of ['tema','temaLogin']){const b=$(id);if(b)b.textContent=theme==='dark'?'☀ Modo claro':'☾ Modo escuro'}};
@@ -76,3 +91,19 @@ try{
   }
  });
 }catch(e){$('loginErro').textContent=e.message;console.error(e)}
+
+// Reorganização de widgets: armazenamento local, sem modificar dados do Firebase.
+(function setupWidgets(){
+ const board=document.getElementById('widgetBoard');if(!board)return;
+ const storageKey='chamagarcom-widgets-v1';
+ try{const order=JSON.parse(localStorage.getItem(storageKey)||'[]');for(const key of order){const el=[...board.children].find(x=>x.dataset.widget===key);if(el)board.append(el)}}catch{}
+ const save=()=>{try{localStorage.setItem(storageKey,JSON.stringify([...board.children].map(x=>x.dataset.widget)))}catch{}};
+ board.addEventListener('click',e=>{const btn=e.target.closest('.move-widget');if(!btn)return;const card=btn.closest('.widget-card');if(btn.dataset.direction==='up'&&card.previousElementSibling)board.insertBefore(card,card.previousElementSibling);if(btn.dataset.direction==='down'&&card.nextElementSibling)board.insertBefore(card.nextElementSibling,card);save()});
+ let dragging=null;
+ board.querySelectorAll('.drag-handle').forEach(handle=>{
+  handle.addEventListener('dragstart',e=>{dragging=handle.closest('.widget-card');e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dragging.dataset.widget);dragging.classList.add('dragging')});
+  handle.addEventListener('dragend',()=>{dragging?.classList.remove('dragging');dragging=null;save()});
+ });
+ board.addEventListener('dragover',e=>{if(!dragging)return;e.preventDefault();const target=e.target.closest('.widget-card');if(!target||target===dragging)return;const r=target.getBoundingClientRect();board.insertBefore(dragging,e.clientY<r.top+r.height/2?target:target.nextSibling)});
+ board.addEventListener('drop',e=>{if(dragging){e.preventDefault();save()}});
+})();

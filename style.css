@@ -37,3 +37,39 @@ body:has(#login:not(.hidden)) #tema{display:none!important}
 .danger-action{color:#b42318!important;border:1px solid #f2b8b5!important;background:transparent!important}
 .danger-action:hover:not(:disabled){background:#fff1f0!important}
 .danger-action:disabled{opacity:.55;cursor:wait}
+
+/* Layout mobile e navegação persistente */
+.topbar{position:sticky;top:0;z-index:30}
+.top-inner{display:flex;flex-direction:column;align-items:stretch;gap:10px;padding:10px 20px}
+.header-line{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px}
+.header-line #sair{margin-left:auto;min-width:55px}
+.fixed-menu{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.fixed-menu .nav{display:flex;gap:6px}
+.fixed-menu button{white-space:nowrap;min-height:40px}
+.widget-board{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px;align-items:start}
+.widget-card{min-width:0}
+.widget-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.widget-head h2{margin:0}
+.widget-controls{display:flex;gap:4px;flex-shrink:0}
+.widget-controls button{padding:5px 9px;min-width:32px;min-height:34px;background:#edf2fa;color:#30425e}
+.widget-controls .drag-handle{cursor:grab;touch-action:none}
+.widget-card.dragging{opacity:.5;outline:2px dashed #2459d3}
+:root[data-theme="dark"] .widget-controls button{background:#263750;color:#e4edfa}
+@media(max-width:700px){
+ .top-inner{padding:8px 12px;gap:6px}
+ .header-line .brand{font-size:14px}
+ .header-line .mark{width:30px;height:30px;border-radius:9px}
+ .fixed-menu{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;width:100%}
+ .fixed-menu .nav{display:contents}
+ .fixed-menu button{font-size:11px;padding:9px 3px;min-width:0;min-height:39px;line-height:1.15;white-space:normal}
+ .fixed-menu #som{font-size:10px}
+ .shell{padding:17px 12px}
+ .widget-board{grid-template-columns:minmax(0,1fr);gap:12px}
+ .widget-head h2{font-size:18px}
+ .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .toolbar{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;max-width:100%;-webkit-overflow-scrolling:touch}
+ .toolbar button{flex-shrink:0}
+ .card{min-width:0}
+ .item-actions button{min-height:38px}
+}
+@media(max-width:360px){.fixed-menu button{font-size:10px}.brand{letter-spacing:-.7px}}
