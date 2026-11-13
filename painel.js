@@ -9,22 +9,36 @@ let soundEnabled=false;
 const soundButton=$('som');
 function showSoundState(){soundButton.textContent=soundEnabled?'● Som ativo':'● Som desativado';soundButton.className=soundEnabled?'sound-on':'sound-off';soundButton.setAttribute('aria-pressed',String(soundEnabled));soundButton.title=soundEnabled?'Clique para silenciar os avisos':'Clique para ativar os avisos';}
 async function enableSound(){try{const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Áudio não disponível');audioCtx ||=new C();await audioCtx.resume();soundEnabled=audioCtx.state==='running';showSoundState();return soundEnabled}catch(e){soundEnabled=false;showSoundState();return false}}
-// Aviso de duas notas com timbre de metais sintetizado e volume moderadamente alto.
-const beep=()=>{
+// Alertas diferentes por tipo: metais para garçom; caixa registradora para conta.
+function playTone(frequency, start, duration, type='sine', volume=.12) {
+ const oscillator=audioCtx.createOscillator(), envelope=audioCtx.createGain();
+ oscillator.type=type; oscillator.frequency.setValueAtTime(frequency,start);
+ envelope.gain.setValueAtTime(.0001,start);
+ envelope.gain.exponentialRampToValueAtTime(Math.max(.0002,volume),start+.015);
+ envelope.gain.exponentialRampToValueAtTime(.0001,start+duration);
+ oscillator.connect(envelope);envelope.connect(audioCtx.destination);
+ oscillator.start(start);oscillator.stop(start+duration+.015);
+}
+function beep(tipo='garcom') {
  if(!soundEnabled||!audioCtx||audioCtx.state!=='running')return;
- try{
-  const now=audioCtx.currentTime;
-  const compressor=audioCtx.createDynamicsCompressor();compressor.threshold.value=-18;compressor.ratio.value=3;compressor.connect(audioCtx.destination);
-  for(const [offset,freq] of [[0,392],[.32,523.25]]){
-   const t=now+offset,env=audioCtx.createGain(),filter=audioCtx.createBiquadFilter();filter.type='lowpass';filter.frequency.value=1700;
-   env.gain.setValueAtTime(.0001,t);env.gain.linearRampToValueAtTime(.17,t+.065);env.gain.setValueAtTime(.15,t+.19);env.gain.exponentialRampToValueAtTime(.0001,t+.37);
-   filter.connect(env);env.connect(compressor);
-   for(const [harmonic,level] of [[1,.7],[2,.22],[3,.1],[4,.05]]){
-    const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type='sawtooth';osc.frequency.setValueAtTime(freq*harmonic*.995,t);osc.frequency.linearRampToValueAtTime(freq*harmonic,t+.045);gain.gain.value=level*.45;osc.connect(gain);gain.connect(filter);osc.start(t);osc.stop(t+.39);
+ try {
+  const t=audioCtx.currentTime+.025;
+  if(tipo==='conta') {
+   // Caixa registradora: clique de abertura e três notas metálicas ascendentes.
+   playTone(240,t,.065,'square',.055);
+   playTone(880,t+.095,.19,'sine',.14);
+   playTone(1174.66,t+.205,.24,'sine',.15);
+   playTone(1567.98,t+.325,.42,'sine',.13);
+   playTone(3135.96,t+.33,.25,'sine',.035);
+  } else {
+   // Duas notas de chamada, com timbre de metais.
+   for(const [offset,freq] of [[0,392],[.32,523.25]]) {
+    playTone(freq,t+offset,.37,'sawtooth',.11);
+    playTone(freq*2,t+offset,.30,'triangle',.045);
    }
   }
- }catch(e){console.warn('Não foi possível tocar o aviso',e)}
-};
+ }catch(e){console.warn('Falha no áudio',e)}
+}
 soundButton.onclick=async()=>{if(soundEnabled){soundEnabled=false;showSoundState();}else{const ok=await enableSound();if(ok)beep();else err.textContent='O navegador bloqueou o áudio. Clique novamente para ativar.'}};
 // Alternância de tema, com preferência salva apenas neste navegador.
 const applyTheme=theme=>{document.documentElement.dataset.theme=theme;try{localStorage.setItem('chamagarcom-theme',theme)}catch{};for(const id of ['tema','temaLogin']){const b=$(id);if(b)b.textContent=theme==='dark'?'☀ Modo claro':'☾ Modo escuro'}};
@@ -45,7 +59,7 @@ try{
   const adminRef=doc(db,'funcionarios',user.uid);try{const s=await getDoc(adminRef);isAdmin=s.exists()&&s.data().papel==='admin'&&s.data().ativo===true}catch(e){isAdmin=false}
   $('adminOnly').classList.toggle('hidden',!isAdmin);$('notAdmin').classList.toggle('hidden',isAdmin);
   const q=query(collection(db,'chamados'),where('status','==','pendente'));
-  unsubscribe=onSnapshot(q,s=>{const ids=new Set(s.docs.map(d=>d.id));if(seen&&s.docs.some(d=>!seen.has(d.id)))beep();seen=ids;allCalls=s.docs.map(d=>({id:d.id,data:d.data()})).sort((a,b)=>(a.data.criadoEm?.seconds||0)-(b.data.criadoEm?.seconds||0));$('conexao').textContent='● Atualizado em tempo real';renderCalls()},e=>{err.textContent='Sem permissão para visualizar chamados: '+e.code;$('conexao').textContent='Sem conexão com os chamados'});
+  unsubscribe=onSnapshot(q,s=>{const ids=new Set(s.docs.map(d=>d.id));if(seen){const novos=s.docs.filter(d=>!seen.has(d.id));for(const d of novos)beep(d.data().tipo==='conta'?'conta':'garcom');}seen=ids;allCalls=s.docs.map(d=>({id:d.id,data:d.data()})).sort((a,b)=>(a.data.criadoEm?.seconds||0)-(b.data.criadoEm?.seconds||0));$('conexao').textContent='● Atualizado em tempo real';renderCalls()},e=>{err.textContent='Sem permissão para visualizar chamados: '+e.code;$('conexao').textContent='Sem conexão com os chamados'});
   if(isAdmin){
    unsubscribeMesas=onSnapshot(collection(db,'mesas'),s=>{
     const box=$('mesasLista');box.replaceChildren();
