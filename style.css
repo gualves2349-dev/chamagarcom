@@ -28,3 +28,7 @@
 :root[data-theme="dark"] .pill{background:#47341d;color:#f9cf8d}
 :root[data-theme="dark"] .success{background:#173c30;color:#b1f5d5}
 @media(max-width:650px){.top-inner{gap:10px}.right{flex-wrap:wrap}.right button{font-size:12px;padding:9px 10px}.theme-login,.theme-client{top:8px;right:8px}}
+
+/* O botão de tema do login só aparece na tela de login. */
+body:has(#workspace:not(.hidden)) #temaLogin{display:none!important}
+body:has(#login:not(.hidden)) #tema{display:none!important}

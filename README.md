@@ -32,3 +32,17 @@ O painel precisa permanecer aberto e com áudio ativado para alertas sonoros. Em
 - Demonstração **Mesa 1 / Salão 1**: https://gualves2349-dev.github.io/chamagarcom/?demo=mesa1 . Os botões simulam respostas, sem criar chamados no Firebase.
 - Para testar um chamado REAL da mesa 1, cadastre a mesa 1 no painel, copie o link exclusivo gerado e abra-o em outro dispositivo.
 - Não é necessário alterar as regras do Firestore para estas mudanças de interface.
+
+
+## Teste REAL da Mesa 1 (v4)
+1. Entre em `painel.html` como administrador.
+2. Em **Cadastrar**, cadastre **Mesa 1** no **Salão 1** (caso ainda não exista).
+3. Em **Mesas cadastradas**, localize Mesa 1 e clique **Abrir página**.
+4. Com `painel.html` aberto em outra aba/dispositivo, clique em **Solicitar Garçom** ou **Solicitar Conta** na página real da mesa.
+5. O chamado deve aparecer no painel em tempo real. Se falhar, leia o erro no console do navegador (F12). Verifique regras Firestore, login e cadastro.
+
+`?demo=mesa1` **não é** uma mesa cadastrada: não pode enviar chamados reais. A v4 informa isso e orienta a abrir o link exclusivo da mesa.
+
+O botão de tema da tela de login fica oculto depois do login para não duplicar o botão do painel.
+
+**Atenção:** as regras do Firestore contidas no ZIP têm UID de exemplo; não publique sem ajustar e revisar. O modelo de escrita anônima requer medidas adicionais contra spam para produção.

@@ -6,11 +6,11 @@ themeBtn.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'l
 const msg=document.querySelector('#message');
 const params=new URLSearchParams(location.search);
 const suppliedToken=params.get('mesa');
-if(params.get('demo')==='mesa1'){
- document.querySelector('#mesa').textContent='Mesa 1';
- document.querySelector('#salao').textContent='Salão 1 · Exemplo para testes';
- msg.className='notice ok';msg.textContent='Modo demonstração: nenhuma solicitação será enviada à central.';
- for(const id of ['garcom','conta']){const btn=document.getElementById(id);btn.disabled=false;btn.onclick=()=>{msg.className='success';msg.textContent=id==='garcom'?'Demonstração: garçom solicitado pela Mesa 1.':'Demonstração: conta solicitada pela Mesa 1.';};}
+if(params.get('demo')==='mesa1' && !suppliedToken){
+ document.querySelector('#mesa').textContent='Teste real da Mesa 1';
+ document.querySelector('#salao').textContent='Para testar o envio ao painel, abra o link exclusivo da Mesa 1 gerado em Cadastrar → Mesas cadastradas → Abrir página.';
+ msg.className='notice';msg.textContent='Este endereço de demonstração não envia chamados. Cadastre a Mesa 1, Salão 1 e abra seu link exclusivo pela central.';
+ document.querySelector('.client-actions').classList.add('hidden');
 }else if(!suppliedToken){
  document.querySelector('#mesa').textContent='Bem-vindo ao atendimento';
  document.querySelector('#salao').textContent='Para solicitar atendimento, aproxime o celular do adesivo NFC ou leia o QR Code da sua mesa.';
