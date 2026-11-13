@@ -43,7 +43,26 @@ try{
      const edit=document.createElement('button');edit.className='secondary tiny';edit.textContent='Editar';edit.onclick=async()=>{const n=prompt('Número da mesa:',v.numero);if(n===null)return;const sal=prompt('Número do salão:',v.salao);if(sal===null)return;if(!/^\d{1,4}$/.test(n.trim())||!Number.isInteger(Number(sal))||Number(sal)<1||Number(sal)>99){alert('Informe número de mesa (1 a 4 dígitos) e salão de 1 a 99.');return;}try{await updateDoc(doc(db,'mesas',d.id),{numero:n.trim(),salao:Number(sal)});}catch(e){alert('Não foi possível editar: '+e.code)}};
      const toggle=document.createElement('button');toggle.className='secondary tiny';toggle.textContent=v.ativa?'Desativar':'Ativar';toggle.onclick=async()=>{if(!confirm(`${v.ativa?'Desativar':'Ativar'} a mesa ${v.numero}?`))return;try{await updateDoc(doc(db,'mesas',d.id),{ativa:!v.ativa})}catch(e){alert('Falha ao alterar mesa: '+e.code)}};
      const open=document.createElement('button');open.className='secondary tiny';open.textContent='Abrir página';open.title='Abrir a página real desta mesa para testar chamados';open.onclick=()=>{const u=new URL('./index.html',location.href);u.searchParams.set('mesa',d.id);window.open(u.href,'_blank','noopener')};
-     actions.append(open,link,edit,toggle);row.append(info,actions);box.append(row);
+     const remove=document.createElement('button');
+     remove.className='secondary tiny danger-action';
+     remove.textContent='Excluir mesa';
+     remove.title='Excluir definitivamente esta mesa';
+     remove.onclick=async()=>{
+       if(allCalls.some(c=>c.data.mesaId===d.id&&c.data.status==='pendente')){
+         alert('Esta mesa possui chamados pendentes. Marque-os como atendidos antes de excluir.');return;
+       }
+       if(!confirm(`Excluir definitivamente a Mesa ${v.numero} do Salão ${v.salao}?\n\nO QR Code e NFC desta mesa deixarão de funcionar. Esta ação não pode ser desfeita.`))return;
+       remove.disabled=true;
+       remove.textContent='Excluindo...';
+       try{
+         await deleteDoc(doc(db,'mesas',d.id));
+       }catch(e){
+         alert('Não foi possível excluir a mesa: '+(e.code||e.message));
+         remove.disabled=false;
+         remove.textContent='Excluir mesa';
+       }
+     };
+     actions.append(open,link,edit,toggle,remove);row.append(info,actions);box.append(row);
     }
    },e=>$('mesasLista').textContent='Erro ao listar mesas: '+e.code);
    unsubscribeFuncs=onSnapshot(collection(db,'funcionarios'),s=>{

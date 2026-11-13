@@ -32,3 +32,8 @@
 /* O botão de tema do login só aparece na tela de login. */
 body:has(#workspace:not(.hidden)) #temaLogin{display:none!important}
 body:has(#login:not(.hidden)) #tema{display:none!important}
+
+/* Ação de exclusão de mesas */
+.danger-action{color:#b42318!important;border:1px solid #f2b8b5!important;background:transparent!important}
+.danger-action:hover:not(:disabled){background:#fff1f0!important}
+.danger-action:disabled{opacity:.55;cursor:wait}
