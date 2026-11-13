@@ -13,6 +13,19 @@ service cloud.firestore {
    allow list: if staff();
    allow create, update, delete: if admin();
   }
+  match /contasPendentes/{mesaId} {
+   allow get: if request.auth != null;
+   allow list: if staff();
+   allow create: if request.auth != null
+     && request.resource.data.keys().hasOnly(['mesaId','solicitante','criadoEm'])
+     && request.resource.data.mesaId == mesaId
+     && request.resource.data.solicitante == request.auth.uid
+     && request.resource.data.criadoEm == request.time
+     && exists(/databases/$(database)/documents/mesas/$(mesaId))
+     && get(/databases/$(database)/documents/mesas/$(mesaId)).data.ativa == true;
+   allow update: if false;
+   allow delete: if staff();
+  }
   match /chamados/{chamadoId} {
    allow get, list: if staff() || (request.auth != null && resource.data.solicitante == request.auth.uid);
    allow create: if request.auth != null

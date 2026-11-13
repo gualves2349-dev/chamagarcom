@@ -1,8 +1,11 @@
-CHAMA GARÇOM — atualização responsiva
+ATUALIZAÇÃO V10 — BLOQUEIO DE SOLICITAR CONTA
 
-1. Envie TODOS os arquivos desta pasta para a raiz do repositório GitHub Pages, substituindo os existentes.
-2. Faça commit e aguarde a publicação.
-3. Abra painel.html e teste em celular.
-4. Em Cadastrar, use ↕ para arrastar blocos em computador; no celular use ↑ e ↓. A ordem é salva apenas neste navegador.
-5. O som toca quando um novo chamado chega, se o navegador permitir áudio. Em iOS pode ser necessário tocar em Som para liberar o áudio. O volume final depende do dispositivo.
-6. Esta versão não altera regras do Firestore nem integra criação de contas no Firebase Authentication.
+Substitua na raiz do GitHub: app.js, painel.js, index.html e painel.html.
+No Firebase Console > Firestore > Regras, publique o conteúdo de firestore.rules (UID do administrador já preenchido).
+
+Uma mesa pode ter apenas uma solicitação de conta pendente por vez, mesmo em celulares diferentes.
+Ao marcar a solicitação de conta como atendida na central, o bloqueio da mesa é removido.
+Solicitar Garçom permanece inalterado.
+
+Atenção: bloqueios antigos não existiam; a regra vale para novos pedidos após publicar a atualização.
+Teste com dois celulares na mesma mesa. Não altere o UID nas regras.
