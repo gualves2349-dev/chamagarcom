@@ -24,3 +24,10 @@ Abra `admin.html`, faça login como administrador, cadastre a mesa e copie o lin
 - O áudio só funciona depois da interação do funcionário com o botão Ativar som e enquanto a página estiver aberta e permitida pelo navegador.
 - Para isolamento de múltiplos restaurantes, evoluir para projeto multiestabelecimento com regras específicas.
 - A configuração Web do Firebase não é senha secreta, mas jamais coloque senhas privadas ou credenciais administrativas no repositório.
+
+
+## Correção GitHub Pages
+O arquivo firebase-config.js exporta firebaseConfig e firebaseReady; firebase.js importa o SDK diretamente da CDN do Google. Não substitua firebase-config.js pelo exemplo do console Firebase com import de firebase/app.
+
+## Segurança antes de uso real
+As regras firestore.rules fornecidas são um protótipo. Elas não implementam limite de frequência robusto por mesa, e permitem a usuários autenticados consultar IDs conhecidos de mesas. Não implante em operação comercial sem proteção contra abuso no servidor. Configure UIDs autorizados em firestore.rules e publique no console Firestore > Regras.
