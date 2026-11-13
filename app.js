@@ -1,7 +1,17 @@
+const themeBtn=document.getElementById('temaCliente');
+function setTheme(theme){document.documentElement.dataset.theme=theme;themeBtn.textContent=theme==='dark'?'☀ Modo claro':'☾ Modo escuro';try{localStorage.setItem('chamagarcom-theme',theme)}catch{}}
+let savedTheme='light';try{savedTheme=localStorage.getItem('chamagarcom-theme')==='dark'?'dark':'light'}catch{}
+setTheme(savedTheme);
+themeBtn.onclick=()=>setTheme(document.documentElement.dataset.theme==='dark'?'light':'dark');
 const msg=document.querySelector('#message');
 const params=new URLSearchParams(location.search);
 const suppliedToken=params.get('mesa');
-if(!suppliedToken){
+if(params.get('demo')==='mesa1'){
+ document.querySelector('#mesa').textContent='Mesa 1';
+ document.querySelector('#salao').textContent='Salão 1 · Exemplo para testes';
+ msg.className='notice ok';msg.textContent='Modo demonstração: nenhuma solicitação será enviada à central.';
+ for(const id of ['garcom','conta']){const btn=document.getElementById(id);btn.disabled=false;btn.onclick=()=>{msg.className='success';msg.textContent=id==='garcom'?'Demonstração: garçom solicitado pela Mesa 1.':'Demonstração: conta solicitada pela Mesa 1.';};}
+}else if(!suppliedToken){
  document.querySelector('#mesa').textContent='Bem-vindo ao atendimento';
  document.querySelector('#salao').textContent='Para solicitar atendimento, aproxime o celular do adesivo NFC ou leia o QR Code da sua mesa.';
  msg.textContent='Cada mesa possui um link exclusivo. Esta é a página geral do sistema.';

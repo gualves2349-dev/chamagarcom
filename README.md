@@ -24,3 +24,11 @@ O painel precisa permanecer aberto e com áudio ativado para alertas sonoros. Em
 - Também é possível editar o nome e ativar/desativar funcionários comuns. A conta de autenticação continua sendo criada manualmente no Firebase Authentication; desativar o cadastro não exclui a conta de autenticação.
 - A URL principal sem parâmetro `?mesa=` agora mostra uma orientação, e não um erro. Para testar os botões use um link exclusivo gerado na aba Cadastrar.
 - Importante: a segurança real é aplicada pelas regras publicadas no Firestore. Não substitua as regras sem preservar o UID de administrador correto. Não use em produção sem proteção adicional contra spam e abuso.
+
+
+## Novidades da versão 3
+- Botões de tema claro/escuro no painel, login e tela da mesa (preferência salva no navegador).
+- Som com estado verde (ativo) ou vermelho (desativado) e aviso suave em dois tons. O sistema tenta habilitar o áudio no login e ao reabrir o painel, mas navegadores podem exigir um clique em **Som desativado**; não é possível garantir reprodução automática sem interação.
+- Demonstração **Mesa 1 / Salão 1**: https://gualves2349-dev.github.io/chamagarcom/?demo=mesa1 . Os botões simulam respostas, sem criar chamados no Firebase.
+- Para testar um chamado REAL da mesa 1, cadastre a mesa 1 no painel, copie o link exclusivo gerado e abra-o em outro dispositivo.
+- Não é necessário alterar as regras do Firestore para estas mudanças de interface.
