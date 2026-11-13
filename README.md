@@ -17,3 +17,10 @@ O `firebase-config.js` já contém a configuração pública fornecida para o pr
 As regras permitem chamados de usuários anônimos autenticados e não implementam limites robustos de frequência nem prevenção de spam. **Use apenas em piloto supervisionado**. Antes de produção, implemente validação/rate limit no backend, proteção contra duplicatas e monitoramento de consumo do Firebase. As regras não são proteção contra abuso de chamadas anônimas.
 
 O painel precisa permanecer aberto e com áudio ativado para alertas sonoros. Em celulares, o navegador pode restringir áudio em segundo plano.
+
+
+## Atualização v2 — Gerenciamento
+- No painel, aba Cadastrar, é possível editar número/salão e ativar/desativar mesas. O identificador exclusivo do link permanece igual após edição.
+- Também é possível editar o nome e ativar/desativar funcionários comuns. A conta de autenticação continua sendo criada manualmente no Firebase Authentication; desativar o cadastro não exclui a conta de autenticação.
+- A URL principal sem parâmetro `?mesa=` agora mostra uma orientação, e não um erro. Para testar os botões use um link exclusivo gerado na aba Cadastrar.
+- Importante: a segurança real é aplicada pelas regras publicadas no Firestore. Não substitua as regras sem preservar o UID de administrador correto. Não use em produção sem proteção adicional contra spam e abuso.
